@@ -95,7 +95,7 @@
       state.cellH = r.height / state.rows;
     }
     state.fs = state.cellW / RATIO;
-    world.ground = state.rows - Math.max(2, Math.round(state.rows * 0.18));
+    world.ground = state.rows - Math.max(4, Math.round(state.rows * 0.3));
     ctx.textBaseline = 'top';
     ctx.font = `${state.fs}px ui-monospace, monospace`;
     if (state.epaper) { drawEpaperOnce(); }
@@ -114,7 +114,7 @@
   }
 
   /* ------------------------------------------------------------------ hair */
-  const HAIR = { strands: 12, segs: 4, nodes: [] };
+  const HAIR = { strands: 14, segs: 3, nodes: [] };
 
   function initHair(px, py) {
     HAIR.nodes = [];
@@ -122,8 +122,8 @@
       const strand = [];
       for (let i = 0; i < HAIR.segs; i++) {
         strand.push({
-          x: px + (s - HAIR.strands / 2) * 0.22 - i * 0.18,
-          y: py + 0.4 + i * 0.55,
+          x: px + (s / (HAIR.strands - 1) - 0.5) * 2.4 - i * 0.2,
+          y: py - 0.1 + i * 0.62,
           ox: px, oy: py, vx: 0, vy: 0,
         });
       }
@@ -135,7 +135,7 @@
     const wind = Math.sin(t * 1.6) * 0.6 + Math.sin(t * 0.7 + 1.3) * 0.35;
     for (let s = 0; s < HAIR.nodes.length; s++) {
       const strand = HAIR.nodes[s];
-      const anchorX = px + (s / (HAIR.strands - 1) - 0.5) * 1.5;
+      const anchorX = px + (s / (HAIR.strands - 1) - 0.5) * 2.4;
       const anchorY = py - 0.15;
       strand[0].x = anchorX; strand[0].y = anchorY;
       for (let i = 1; i < strand.length; i++) {
@@ -143,13 +143,13 @@
         const vx = (n.x - n.ox) * 0.92;
         const vy = (n.y - n.oy) * 0.92;
         n.ox = n.x; n.oy = n.y;
-        n.x += vx + (wind * 0.02 + player.vx * 0.012) * i;
-        n.y += vy + 0.028 + Math.sin(t * 3 + i) * 0.004;
+        n.x += vx + (wind * 0.03 + player.vx * 0.02) * i;
+        n.y += vy + 0.022 + Math.sin(t * 3 + i * 1.7) * 0.005;
         // keep the segment length honest so hair does not stretch
         const px2 = strand[i - 1].x, py2 = strand[i - 1].y;
         const dx = n.x - px2, dy = n.y - py2;
         const d = Math.hypot(dx, dy) || 1;
-        const want = 0.55;
+        const want = 0.62;
         n.x = px2 + (dx / d) * want;
         n.y = py2 + (dy / d) * want;
       }
@@ -169,14 +169,29 @@
       if (level >= levels[i]) { levels[i] = level; chars[i] = ch; }
     };
 
-    // distant hills: low-density glyphs, parallax at 0.3
-    for (let x = 0; x < cols; x++) {
-      const wx = (camX * 0.3 + x) * 0.012;
-      const h = fbm(wx, 0.7, 3);
-      const top = Math.max(1, Math.floor(ground - h * rows * 0.42));
-      for (let y = top; y < ground; y++) {
-        const d = (y - top) / Math.max(1, ground - top);
-        put(x, y, Math.max(1, Math.floor((1 - d) * 2.2)), 1);
+    // stars: sparse, only in the phosphor mode (1-bit would read as noise)
+    if (!state.epaper) {
+      for (let s = 0; s < cols * rows * 0.012; s++) {
+        const sx = Math.floor(hash(s * 3.7) * cols);
+        const sy = Math.floor(hash(s * 8.1) * ground * 0.72);
+        put(sx, sy, 1, 0);
+      }
+    }
+
+    // two hill layers at different parallax and brightness — the cheap depth cue
+    for (let layer = 0; layer < 2; layer++) {
+      const par = layer === 0 ? 0.18 : 0.42;
+      const amp = layer === 0 ? 0.55 : 0.38;
+      const base = layer === 0 ? 2 : 3;
+      for (let x = 0; x < cols; x++) {
+        const wx = (camX * par + x) * (layer === 0 ? 0.008 : 0.015);
+        const h = fbm(wx, 0.7 + layer * 3, 3);
+        const top = Math.max(1, Math.floor(ground - h * rows * amp));
+        for (let y = top; y < ground; y++) {
+          const d = (y - top) / Math.max(1, ground - top);
+          const lvl = Math.min(LEVELS - 1, base + Math.floor(d * (2 + layer)));
+          put(x, y, lvl, 1);
+        }
       }
     }
 
@@ -189,13 +204,17 @@
 
       for (let b = 0; b < tuft; b++) {
         const jitter = hash(wx * 3.1 + b * 7.7);
-        const hgt = 1 + Math.floor(jitter * 3 * density + 1);
-        const lean = sway * (0.6 + jitter) + (jitter - 0.5) * 0.8;
-        const gx = x + Math.round(lean * (hgt / 3));
+        const hgt = 1 + Math.floor(jitter * 5 * density + 1);
+        const lean = sway * (0.8 + jitter * 1.4) + (jitter - 0.5) * 1.2;
+        const gx = x + Math.round(lean * (hgt / 2.6));
         const gy = ground - hgt;
-        const lvl = Math.min(LEVELS - 1, 2 + Math.floor(density * 4 + jitter * 2));
-        put(gx, gy, lvl, Math.abs(lean) < 0.45 ? 2 : (lean > 0 ? 3 : 4));
-        if (hgt > 2) put(gx, gy + 1, Math.max(1, lvl - 2), 2);
+        const lvl = Math.min(LEVELS - 1, 3 + Math.floor(density * 4 + jitter * 2));
+        // stem char from the lean, so the whole field leans with the wind
+        const stem = Math.abs(lean) < 0.4 ? 2 : (lean > 0 ? 3 : 4);
+        put(gx, gy, lvl, stem);
+        if (hgt > 1) put(gx, gy + 1, Math.max(1, lvl - 2), 2);
+        // a seed head on the tallest blades
+        if (hgt > 4 && jitter > 0.55) put(gx, gy - 1, lvl, 5);
       }
 
       // soil
@@ -244,7 +263,7 @@
   function drawPlayer(t) {
     const { cols, cellW, cellH, fs } = state;
     const ground = world.ground;
-    const px = Math.floor(cols * 0.38 - state.camX % 1);
+    const px = Math.floor(cols * 0.42);
     const bob = Math.sin(t * 9) * (Math.abs(player.vx) > 0.4 ? 0.35 : 0.1);
     const py = ground - 4 + bob;
     const ink = state.epaper ? '#15170f' : 'rgba(210,255,225,.96)';
@@ -383,7 +402,7 @@
 
   /* ------------------------------------------------------------------ boot */
   resize();
-  initHair(state.cols * 0.38, world.ground - 4);
+  initHair(state.cols * 0.42, world.ground - 4);
   updateHud();
   requestAnimationFrame(frame);
 })();
