@@ -405,36 +405,35 @@
     const px = Math.floor(GW * 0.42);
     const ground = world.horizon;
     const moving = Math.abs(player.vx) > 0.4;
-    const bob = moving ? Math.sin(player.anim * 2) * 0.4 : Math.sin(t * 1.8) * 0.12;
-    const py = ground - 6 + bob;
+    const bob = moving ? Math.sin(player.anim * 2) * 0.35 : Math.sin(t * 1.8) * 0.12;
+    const py = Math.round(ground - 7 + bob);
     const f = player.facing;
-    const ink = state.epaper ? 14 : 15;
 
-    const stamp = (gx, gy, ch) => put(gx, gy, ch, ink);
-    // hair sits behind the head
-    stamp(px, py - 1, '@');
-    stamp(px, py, 'o');
-    // shoulders and body
-    stamp(px - 1, py + 1, '/'); stamp(px, py + 1, '|'); stamp(px + 1, py + 1, f > 0 ? '\\' : '/');
-    stamp(px, py + 2, '|'); stamp(px, py + 3, '|');
-    // arms swing
-    const swing = Math.sin(player.anim) > 0 ? 1 : -1;
-    stamp(px - 2, py + 2, swing > 0 ? '/' : '|');
-    stamp(px + 2, py + 2, swing > 0 ? '|' : '\\');
-    // legs alternate
-    const step = Math.sin(player.anim) > 0;
-    stamp(px, py + 4, step ? '/' : '|');
-    stamp(px + 1, py + 4, step ? '|' : '\\');
-    stamp(px, py + 5, step ? '|' : '/');
-    stamp(px + 1, py + 5, step ? '\\' : '|');
-
+    // hair first, so it reads as behind the silhouette
     stepHair(px, py, t);
     for (const strand of HAIR.nodes) {
       for (let i = 1; i < strand.length; i++) {
         const n = strand[i];
-        put(Math.round(n.x), Math.round(n.y), i % 2 ? '`' : "'", 13);
+        put(Math.round(n.x), Math.round(n.y), i % 2 ? '`' : "'", 12);
       }
     }
+
+    // a solid silhouette: strokes blend into the grass stems, filled cells do not
+    const body = (dx, dy, ch) => put(px + dx, py + dy, ch, 15);
+    body(0, 0, '^');                       // hat
+    body(0, 1, 'o');                       // head
+    body(-1, 2, '/'); body(0, 2, '#'); body(1, 2, f > 0 ? '\\' : '/');
+    body(0, 3, '#'); body(0, 4, '#');
+    // arms swing opposite the legs
+    const swing = Math.sin(player.anim) > 0 ? 1 : -1;
+    body(-2, 3, swing > 0 ? '/' : '|');
+    body(2, 3, swing > 0 ? '|' : '\\');
+    // legs alternate with the walk cycle
+    const step = Math.sin(player.anim) > 0;
+    body(-1, 5, step ? '/' : '|');
+    body(1, 5, step ? '|' : '\\');
+    body(-1, 6, step ? '|' : '/');
+    body(1, 6, step ? '\\' : '|');
   }
 
   /* ---------------------------------------------------------------- compose */
