@@ -95,7 +95,7 @@
       state.cellH = r.height / state.rows;
     }
     state.fs = state.cellW / RATIO;
-    world.ground = state.rows - Math.max(4, Math.round(state.rows * 0.3));
+    world.ground = state.rows - Math.max(4, Math.round(state.rows * 0.22));
     ctx.textBaseline = 'top';
     ctx.font = `${state.fs}px ui-monospace, monospace`;
     if (state.epaper) { drawEpaperOnce(); }
@@ -181,12 +181,13 @@
     // two hill layers at different parallax and brightness — the cheap depth cue
     for (let layer = 0; layer < 2; layer++) {
       const par = layer === 0 ? 0.18 : 0.42;
-      const amp = layer === 0 ? 0.55 : 0.38;
+      const amp = layer === 0 ? 0.78 : 0.46;
       const base = layer === 0 ? 2 : 3;
+      const floor = layer === 0 ? 0.34 : 0.16;   // the skyline never sits in the cellar
       for (let x = 0; x < cols; x++) {
         const wx = (camX * par + x) * (layer === 0 ? 0.008 : 0.015);
         const h = fbm(wx, 0.7 + layer * 3, 3);
-        const top = Math.max(1, Math.floor(ground - h * rows * amp));
+        const top = Math.max(1, Math.floor(ground - (floor + h * amp) * rows));
         for (let y = top; y < ground; y++) {
           const d = (y - top) / Math.max(1, ground - top);
           const lvl = Math.min(LEVELS - 1, base + Math.floor(d * (2 + layer)));
@@ -223,7 +224,7 @@
 
       // the occasional flower catches the light
       if (hash(wx * 9.13) > 0.993) {
-        put(x, ground - 2, LEVELS - 1, 8);
+        put(x, ground - 2, LEVELS - 2, 5);
         put(x, ground - 1, 3, 2);
       }
     }
