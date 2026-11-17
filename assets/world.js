@@ -111,7 +111,7 @@
     gCh = new Uint16Array(GW * GH);
     gLv = new Uint8Array(GW * GH);
 
-    world.horizon = Math.round(GH * (state.epaper ? 0.58 : 0.62));
+    world.horizon = Math.round(GH * (state.epaper ? 0.6 : 0.69));
     world.ground = world.horizon;
     state.cells = GW * GH;
 
@@ -140,12 +140,12 @@
     if (p.moon <= 0.05) return;
     const mx = Math.floor(GW * 0.79 - (state.camX * 0.01) % GW);
     const my = Math.floor(world.horizon * 0.26);
-    const r = state.epaper ? 1 : 3;
+    const r = state.epaper ? 1 : 2;
     for (let dy = -r - 2; dy <= r + 2; dy++) {
       for (let dx = -r - 2; dx <= r + 2; dx++) {
         const d = Math.hypot(dx, dy);
-        if (d <= r) put(mx + dx, my + dy, d < r - 0.6 ? 'O' : 'o', Math.round(9 * p.moon));
-        else if (d <= r + 2.2 && hash2(dx * 3 + mx, dy * 3 + my) > 0.45) put(mx + dx, my + dy, '·', Math.round(2 * p.moon));
+        if (d <= r - 0.4) put(mx + dx, my + dy, d < r - 1.2 ? '@' : 'O', Math.round(11 * p.moon));
+        else if (d <= r + 2.6 && hash2(dx * 3 + mx, dy * 3 + my) > 0.72) put(mx + dx, my + dy, '·', Math.round(2 * p.moon));
       }
     }
   }
@@ -198,15 +198,16 @@
       const top = Math.max(1, world.horizon - height);
       for (let y = top; y < world.horizon; y++) {
         const d = (y - top) / Math.max(1, world.horizon - top);
-        // sparse below the ridge: a solid wall of glyphs reads as noise
-        const sparse = hash2(x * 1.7, y * 2.3 + state.seed) > 0.42 - d * 0.3;
+        // sparse body: a solid wall of glyphs reads as noise, not as a slope
+        const sparse = hash2(x * 1.7, y * 2.3 + state.seed) > 0.66 - d * 0.22;
         if (!sparse) continue;
-        const lvl = Math.round(lvlBody + d * 3);
-        const glyph = d < 0.35 ? chRidge : chBody;
-        put(x, y, glyph, lvl);
+        const lvl = Math.round(lvlBody + d * 2.5);
+        // snow lives on the peak only — painting the whole flank in the ridge
+        // glyph turns the range into a single bright slab
+        const glyph = d < 0.08 && hash2(x * 0.37, state.seed) > 0.35 ? chRidge : chBody;
+        put(x, y, glyph, glyph === chRidge ? lvlRidge : lvl);
       }
       put(x, top, chRidge, lvlRidge);
-      if (hash(x * 0.37 + state.seed) > 0.86) put(x, top + 1, '*', lvlRidge);
     }
   }
 
@@ -268,11 +269,11 @@
       const surf = g + bump;
       for (let y = surf; y < GH; y++) {
         const d = y - surf;
-        let ch = '#', lvl = 6 - Math.min(4, Math.floor(d * 0.7));
+        let ch = d < 3 ? '#' : ':', lvl = 6 - Math.min(5, Math.floor(d * 0.9));
         if (d === 0) { ch = '_'; lvl = 7; }
         else if (d === 1) { ch = '#'; lvl = 6; }
-        else if ((y + Math.floor(wx / 7)) % 5 === 0) { ch = '-'; lvl = 3; }   // strata
-        else if (hash2(wx * 0.9, y * 1.7) > 0.86) { ch = 'O'; lvl = 5; }      // rock
+        else if ((y + Math.floor(wx / 7)) % 6 === 0) { ch = '-'; lvl = 2; }   // strata
+        else if (hash2(wx * 0.9, y * 1.7) > 0.93) { ch = 'O'; lvl = 5; }      // rock
         else if (hash2(wx * 2.1, y * 0.7) > 0.94) { ch = ':', lvl = 3; }      // grit
         put(x, y, ch, lvl);
       }
@@ -301,12 +302,12 @@
       const wave = Math.sin(t * 1.7 + wx * 0.06) * 0.8 + Math.sin(t * 0.8 + wx * 0.021) * 0.5;
 
       // back pass: short, dim, every column
-      if (hash(wx * 5.1) > 0.35) {
+      if (hash(wx * 5.1) > 0.35 && !near) {
         const hh = 1 + Math.floor(hash(wx * 2.3) * 2);
         blade(x, g - 1, hh, 3, wave * 0.4);
       }
       // mid pass: clustered tufts
-      if (density > 0.42) {
+      if (density > 0.42 && !near) {
         const n = 1 + Math.floor(hash(wx * 7.7) * 2);
         for (let b = 0; b < n; b++) {
           const j = hash(wx * 3.1 + b * 7.7);
@@ -319,8 +320,12 @@
         const hh = 4 + Math.floor(hash(wx * 0.7) * 5);
         blade(x, GH - 1, hh, 3, wave * 1.4);
       }
+      // keep a clear pocket around the actor, or it vanishes into the field
+      const pxNow = Math.floor(GW * 0.42);
+      const near = Math.abs(x - pxNow) <= 2;
+
       // flowers and mushrooms at the crest
-      if (hash(wx * 9.13 + state.seed) > 0.988) {
+      if (!near && hash(wx * 9.13 + state.seed) > 0.988) {
         put(x, g - 3, '*', 8); put(x, g - 2, '|', 4); put(x, g - 1, '|', 3);
         put(x + 1, g - 2, '/', 5);
       }
