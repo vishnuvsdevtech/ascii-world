@@ -199,7 +199,7 @@
       for (let y = top; y < world.horizon; y++) {
         const d = (y - top) / Math.max(1, world.horizon - top);
         // sparse body: a solid wall of glyphs reads as noise, not as a slope
-        const sparse = hash2(x * 1.7, y * 2.3 + state.seed) > 0.66 - d * 0.22;
+        const sparse = hash2(x * 1.7, y * 2.3 + state.seed) > 0.80 - d * 0.30;
         if (!sparse) continue;
         const lvl = Math.round(lvlBody + d * 2.5);
         // snow lives on the peak only — painting the whole flank in the ridge
@@ -218,7 +218,7 @@
       const wx = offset + x;
       const grove = fbm(wx * 0.012, 9.1, 3);
       if (grove < 0.52) continue;
-      const h = 4 + Math.floor(hash(wx * 0.71) * 7);
+      const h = 6 + Math.floor(hash(wx * 0.71) * 9);
       const top = world.horizon - h;
       // trunk
       for (let y = top + 2; y < world.horizon; y++) put(x, y, '|', 3);
@@ -226,9 +226,9 @@
       for (let dy = -2; dy <= 2; dy++) {
         for (let dx = -2; dx <= 2; dx++) {
           const d = Math.hypot(dx, dy * 1.5);
-          if (d > 2.4) continue;
+          if (d > 3.0) continue;
           if (hash2((x + dx) * 3.1, (top + dy) * 5.7) > 0.35) {
-            put(x + dx, top + dy, d < 1.2 ? 'o' : '*', Math.round(4 + (2 - d)));
+            put(x + dx, top + dy, d < 1.4 ? 'o' : '*', Math.round(4 + (2.6 - d)));
           }
         }
       }
@@ -269,12 +269,12 @@
       const surf = g + bump;
       for (let y = surf; y < GH; y++) {
         const d = y - surf;
-        let ch = d < 3 ? '#' : ':', lvl = 6 - Math.min(5, Math.floor(d * 0.9));
+        let ch = d < 2 ? '#' : d < 6 ? '=' : ':', lvl = 6 - Math.min(5, Math.floor(d * 0.9));
         if (d === 0) { ch = '_'; lvl = 7; }
         else if (d === 1) { ch = '#'; lvl = 6; }
         else if ((y + Math.floor(wx / 7)) % 6 === 0) { ch = '-'; lvl = 2; }   // strata
-        else if (hash2(wx * 0.9, y * 1.7) > 0.93) { ch = 'O'; lvl = 5; }      // rock
-        else if (hash2(wx * 2.1, y * 0.7) > 0.94) { ch = ':', lvl = 3; }      // grit
+        else if (hash2(wx * 0.9, y * 1.7) > 0.988) { ch = 'O'; lvl = 5; }     // rock
+        else if (hash2(wx * 2.1, y * 0.7) > 0.90) { ch = '·', lvl = 2; }      // grit
         put(x, y, ch, lvl);
       }
       // roots
@@ -302,7 +302,7 @@
       const wave = Math.sin(t * 1.7 + wx * 0.06) * 0.8 + Math.sin(t * 0.8 + wx * 0.021) * 0.5;
 
       // keep a clear pocket around the actor, or it vanishes into the field
-      const nearActor = Math.abs(x - Math.floor(GW * 0.42)) <= 2;
+      const nearActor = Math.abs(x - Math.floor(GW * 0.42)) <= 3;
 
       // back pass: short, dim, every column
       if (hash(wx * 5.1) > 0.35 && !nearActor) {
@@ -444,9 +444,9 @@
     drawMoon(t);
     drawClouds(t);
     drawBirds(t);
-    ridge(0.05, 0.006, 0.26, 0.5, ':', '+', 1, 4);      // far range
-    ridge(0.16, 0.012, 0.16, 0.42, ';', '*', 2, 5);     // mid range
-    ridge(0.34, 0.02, 0.08, 0.3, ',', '*', 3, 6);       // near ridge
+    ridge(0.04, 0.0045, 0.30, 0.52, '·', '+', 1, 5);    // far range: dim, smooth
+    ridge(0.13, 0.011, 0.17, 0.40, ':', '*', 2, 6);     // mid range: jagged
+    ridge(0.30, 0.026, 0.07, 0.26, ';', '*', 3, 7);     // near ridge: rough
     drawForest(t);
     drawVillage(t);
     drawGround(t);
