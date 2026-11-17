@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII World — a glyph-grid world you can walk</title>
+<meta name="description" content="A procedural ASCII world: millions of grass blades defined by density rather than stored, verlet hair on the character, view-culled glyph rendering, and an e-paper mode that targets a 296x128 panel.">
+<meta name="theme-color" content="#07100a">
+<meta property="og:title" content="ASCII World — a glyph-grid world you can walk">
+<meta property="og:description" content="Grass as a density field, hair as verlet chains, rendering batched per row. Walk it with WASD.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://vishnuvsdevtech.github.io/ascii-world/">
+<link rel="stylesheet" href="assets/world.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><i></i><span>ASCII WORLD</span></div>
+  <div class="right">
+    <span class="hint" id="hint">WASD / arrows to walk · shift to run</span>
+    <button class="toggle" id="epaperBtn" aria-pressed="false">e-paper 296×128</button>
+    <button class="toggle" id="pauseBtn" aria-pressed="false">pause</button>
+  </div>
+</header>
+
+<main class="stage">
+  <div class="screen" id="screen">
+    <canvas id="world"></canvas>
+    <div class="scan" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+  </div>
+</main>
+
+<footer class="foot">
+  <span class="mono"><b id="fps">60</b> fps · <b id="cells">0</b> cells · <b id="runs">0</b> runs</span>
+  <span class="mono" id="worldInfo">world 512×512 · blades ~0</span>
+</footer>
+
+<script src="assets/world.js"></script>
+</body>
+</html>
