@@ -18,6 +18,13 @@
   <div class="brand"><i></i><span>ASCII WORLD</span></div>
   <div class="right">
     <span class="hint" id="hint">WASD / arrows to walk · shift to run</span>
+    <select class="toggle" id="tod" aria-label="Time of day">
+      <option value="night">night</option>
+      <option value="dawn">dawn</option>
+      <option value="day">day</option>
+      <option value="dusk">dusk</option>
+    </select>
+    <button class="toggle" id="reseed">new world</button>
     <button class="toggle" id="epaperBtn" aria-pressed="false">e-paper 296×128</button>
     <button class="toggle" id="pauseBtn" aria-pressed="false">pause</button>
   </div>
@@ -32,7 +39,7 @@
 </main>
 
 <footer class="foot">
-  <span class="mono"><b id="fps">60</b> fps · <b id="cells">0</b> cells · <b id="runs">0</b> runs</span>
+  <span class="mono"><b id="fps">60</b> fps · <b id="cells">0</b> cells · <b id="runs">0</b> runs · <b id="entities">0</b> live</span>
   <span class="mono" id="worldInfo">world 512×512 · blades ~0</span>
 </footer>
 

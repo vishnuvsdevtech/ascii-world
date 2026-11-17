@@ -77,3 +77,14 @@ body.epaper .screen{
 body.epaper .scan{opacity:0}
 body.epaper .vignette{background:radial-gradient(120% 100% at 50% 50%, transparent 70%, rgba(120,110,90,.18) 100%)}
 @media (max-width:640px){ .hint{display:none} }
+
+/* the time-of-day control is a select wearing the button's clothes */
+select.toggle{
+  appearance:none; -webkit-appearance:none; padding-right:18px;
+  background-image:linear-gradient(45deg, transparent 50%, currentColor 50%),
+                   linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:calc(100% - 10px) 50%, calc(100% - 6px) 50%;
+  background-size:4px 4px, 4px 4px; background-repeat:no-repeat;
+}
+select.toggle option{ background:#0a1410; color:#9fe8bd }
+body.epaper select.toggle option{ background:#efe9d8; color:#15170f }
