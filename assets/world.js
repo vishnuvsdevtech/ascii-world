@@ -342,7 +342,9 @@
 
     // fps + hud
     if (now - state.lastFps > 500) {
-      state.fps = Math.round((state.frames * 1000) / (now - state.lastFps || 1));
+      state.fps = state.epaper
+        ? 3                                            // the panel's real refresh ceiling
+        : Math.round((state.frames * 1000) / (now - state.lastFps || 1));
       state.frames = 0; state.lastFps = now;
       updateHud();
     }
