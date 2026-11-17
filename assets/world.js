@@ -191,8 +191,13 @@
         for (let y = top; y < ground; y++) {
           const d = (y - top) / Math.max(1, ground - top);
           const lvl = Math.min(LEVELS - 1, base + Math.floor(d * (2 + layer)));
-          put(x, y, lvl, 1);
+          // the GLYPH carries the depth, not just the alpha: a uniform '·' field
+          // with varying opacity reads as static, not as terrain
+          const glyph = Math.min(6, Math.max(1, Math.floor(lvl * 0.85)));
+          put(x, y, lvl, glyph);
         }
+        // a lit ridge line, so the silhouette reads against the sky
+        put(x, top, Math.min(LEVELS - 1, base + 3), 2);
       }
     }
 
