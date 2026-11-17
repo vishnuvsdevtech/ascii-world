@@ -301,13 +301,16 @@
       const density = fbm(wx * 0.05, 0.3, 4);
       const wave = Math.sin(t * 1.7 + wx * 0.06) * 0.8 + Math.sin(t * 0.8 + wx * 0.021) * 0.5;
 
+      // keep a clear pocket around the actor, or it vanishes into the field
+      const nearActor = Math.abs(x - Math.floor(GW * 0.42)) <= 2;
+
       // back pass: short, dim, every column
-      if (hash(wx * 5.1) > 0.35 && !near) {
+      if (hash(wx * 5.1) > 0.35 && !nearActor) {
         const hh = 1 + Math.floor(hash(wx * 2.3) * 2);
         blade(x, g - 1, hh, 3, wave * 0.4);
       }
       // mid pass: clustered tufts
-      if (density > 0.42 && !near) {
+      if (density > 0.42 && !nearActor) {
         const n = 1 + Math.floor(hash(wx * 7.7) * 2);
         for (let b = 0; b < n; b++) {
           const j = hash(wx * 3.1 + b * 7.7);
@@ -320,12 +323,8 @@
         const hh = 4 + Math.floor(hash(wx * 0.7) * 5);
         blade(x, GH - 1, hh, 3, wave * 1.4);
       }
-      // keep a clear pocket around the actor, or it vanishes into the field
-      const pxNow = Math.floor(GW * 0.42);
-      const near = Math.abs(x - pxNow) <= 2;
-
       // flowers and mushrooms at the crest
-      if (!near && hash(wx * 9.13 + state.seed) > 0.988) {
+      if (!nearActor && hash(wx * 9.13 + state.seed) > 0.988) {
         put(x, g - 3, '*', 8); put(x, g - 2, '|', 4); put(x, g - 1, '|', 3);
         put(x + 1, g - 2, '/', 5);
       }
